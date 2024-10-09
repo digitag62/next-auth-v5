@@ -1,36 +1,58 @@
 import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
 import Credentials from "next-auth/providers/credentials";
 import prismadb from "@/lib/prisma";
-// import { comparePasswordHash } from "@/lib/helpers";
+import { z } from "zod";
+import bcrypt from "bcrypt";
+
+export type User = {
+  id: string;
+  email: string;
+  name: string | null;
+  pwd: string;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date | null;
+  createdBy: string;
+  updatedBy: string | null;
+};
+
+async function getUser(email: string): Promise<User | null> {
+  try {
+    const user = await prismadb.user.findUnique({ where: { email } });
+    return user;
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+    throw new Error("Failed to fetch user.");
+  }
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
-      credentials: {
-        username: { label: "Username" },
-        password: { label: "Password", type: "password" },
-      },
+      // You can use the 'authorize' function to handle the authentication logic.
       async authorize(credentials) {
-        let user = null;
+        // Similarly to Server Actions, you can use zod to validate the email and password before checking if the user exists in the database
+        const parsedCredentials = z
+          .object({ email: z.string().email(), password: z.string().min(6) })
+          .safeParse(credentials);
 
-        // logic to verify if the user exists
-        user = await prismadb.user.findUnique({
-          where: { email: credentials.username as string },
-        });
-        if (!user) {
-          // No user found, so this is their first attempt to login
-          // meaning this is also the place you could do registration
-          throw new Error("User not found.");
+        // After validating the format of credentials using zod
+        if (parsedCredentials.success) {
+          const { email, password } = parsedCredentials.data;
+
+          // create a 'getUser' function that queries the user from the database
+          const user = await getUser(email);
+          if (!user) return null;
+
+          // call bcrypt.compare to check if the passwords match:
+          const passwordsMatch = await bcrypt.compare(password, user.pwd);
+          if (passwordsMatch) return user;
         }
 
-        // logic to salt and hash password
-        // const pwHash = comparePasswordHash(
-        //   credentials.password as string,
-        //   user.pwd
-        // );
-
-        // return user object with their profile data
-        return user;
+        console.log("Invalid credentials");
+        return null;
       },
     }),
   ],

@@ -17,37 +17,39 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { authenticate } from "@/lib/actions";
+import { createUser } from "@/lib/actions";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
+  name: z.string(),
   email: z.string().email(),
   password: z.string().min(6).max(32),
 });
 
-export const FormSignin = () => {
+export const FormSignup = () => {
   const { toast } = useToast();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const res = await authenticate(values);
+    const res = await createUser(values);
 
     if (res.success) {
       toast({
-        title: "Signed In!",
-        description: "Sign up success, please sign in.",
+        title: "Signed Up!",
+        description: "Sign in success, welcome bruh.",
       });
 
-      router.push("/dashboard");
+      router.push("/sign-in");
     } else {
       toast({
         title: "Sign Up Failed!",
@@ -61,12 +63,25 @@ export const FormSignin = () => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
         <FormField
           control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input type="text" placeholder="Mad" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="shadcn" {...field} />
+                <Input type="email" placeholder="mad@example.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,7 +94,7 @@ export const FormSignin = () => {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="shadcn" {...field} />
+                <Input type="password" placeholder="********" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -87,9 +102,9 @@ export const FormSignin = () => {
         />
         <div className="space-y-4">
           <p className="text-sm">
-            Doesn't have an account?{" "}
-            <Link href="/sign-up" className="underline">
-              Sign Up
+            Already have an account?{" "}
+            <Link href="/sign-in" className="underline">
+              Sign In
             </Link>
           </p>
         </div>
