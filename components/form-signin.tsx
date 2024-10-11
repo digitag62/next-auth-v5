@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -27,6 +27,7 @@ const formSchema = z.object({
 });
 
 export const FormSignin = () => {
+  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast();
   const router = useRouter();
 
@@ -39,6 +40,7 @@ export const FormSignin = () => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true)
     const res = await authenticate(values);
 
     if (res.success) {
@@ -46,13 +48,15 @@ export const FormSignin = () => {
         title: "Signed In!",
         description: "Sign up success, please sign in.",
       });
+      setIsLoading(false)
 
       router.push("/dashboard");
     } else {
       toast({
         title: "Sign Up Failed!",
-        description: "There was a problem with your request.",
+        description: res.message,
       });
+      setIsLoading(false)
     }
   }
 
@@ -87,7 +91,7 @@ export const FormSignin = () => {
         />
         <div className="space-y-4">
           <p className="text-sm">
-            Doesn't have an account?{" "}
+            Doesn&apos;t have an account?{" "}
             <Link href="/sign-up" className="underline">
               Sign Up
             </Link>
@@ -97,7 +101,7 @@ export const FormSignin = () => {
           <Link href="/" className={cn(buttonVariants())}>
             Cancel
           </Link>
-          <Button type="submit">Submit</Button>
+          <Button disabled={isLoading} type="submit">Submit</Button>
         </div>
       </form>
     </Form>

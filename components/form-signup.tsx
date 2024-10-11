@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,6 +28,7 @@ const formSchema = z.object({
 });
 
 export const FormSignup = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -41,20 +42,24 @@ export const FormSignup = () => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
     const res = await createUser(values);
 
     if (res.success) {
       toast({
         title: "Signed Up!",
-        description: "Sign in success, welcome bruh.",
+        description: "Sign up success, please try to sign in.",
       });
 
+      setIsLoading(false);
       router.push("/sign-in");
     } else {
       toast({
         title: "Sign Up Failed!",
         description: "There was a problem with your request.",
       });
+
+      setIsLoading(false);
     }
   }
 
