@@ -10,7 +10,7 @@ export default async function Dashboard() {
     <div className="min-h-screen flex flex-col items-center justify-center">
       <main className="flex flex-col gap-2 items-center ">
         <h2>Hello from Dashboard</h2>
-        <p>{JSON.stringify(session?.user)}</p>
+        <pre>{JSON.stringify(session?.user, null, 4)}</pre>
         <div className="flex items-center justify-center gap-2">
           <Link href="/" className={cn(buttonVariants())}>
             Back to Home

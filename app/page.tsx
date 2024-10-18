@@ -10,6 +10,9 @@ export default function Home() {
         <Link href="/dashboard" className={cn(buttonVariants())}>
           Get Started
         </Link>
+        <Link href="/alarm" className={cn(buttonVariants())}>
+          Alarm
+        </Link>
       </main>
     </div>
   );

@@ -1,6 +1,8 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
 import Credentials from "next-auth/providers/credentials";
+import GitHub from "next-auth/providers/github"
+
 import prismadb from "@/lib/prisma";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -55,5 +57,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return null;
       },
     }),
+    GitHub
   ],
 });
