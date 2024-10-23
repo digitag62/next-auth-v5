@@ -51,7 +51,7 @@ export const AlarmClock = () => {
 
   for (let i: number = 1; i <= 60; i++) {
     selectMinutes.push(
-      <SelectItem value={`${String(i).padStart(2, "0")}`}>
+      <SelectItem key={i} value={`${String(i).padStart(2, "0")}`}>
         {`${String(i).padStart(2, "0")}`}
       </SelectItem>
     );
@@ -59,7 +59,7 @@ export const AlarmClock = () => {
 
   for (let i: number = 1; i <= 24; i++) {
     selectHours.push(
-      <SelectItem value={`${String(i).padStart(2, "0")}`}>
+      <SelectItem key={i} value={`${String(i).padStart(2, "0")}`}>
         {`${String(i).padStart(2, "0")}`}
       </SelectItem>
     );

@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import useSound from "use-sound";
-import Head from "next/head";
 
 export const TimerClock = () => {
   const [duration, setDuration] = useState<number | string>("");
@@ -18,8 +17,8 @@ export const TimerClock = () => {
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [duar] = useSound("/sound/shocked-sound-effect.mp3", { volume: 0.5 });
-  // const [huh] = useSound("/sound/huhh.mp3", { volume: 0.5 });
-  const [goku] = useSound("/sound/metal-pipe.mp3", { volume: 0.3 });
+  const [alarmsRetro] = useSound("/sound/alarms-morning.wav", { volume: 0.5 });
+  // const [goku] = useSound("/sound/metal-pipe.mp3", { volume: 0.3 });
 
   let selectSeconds = [];
   for (let i: number = 1; i <= 60; i++) {
@@ -90,7 +89,7 @@ export const TimerClock = () => {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
             clearInterval(timerRef.current!);
-            goku();
+            alarmsRetro();
             return 0;
           }
           return prevTime - 1;
@@ -119,8 +118,8 @@ export const TimerClock = () => {
             <SelectValue placeholder="Theme" />
           </SelectTrigger>
           <SelectContent>
-            {selectSeconds.map((t) => (
-              <SelectItem value={t.duration.toString()}>{t.text}</SelectItem>
+            {selectSeconds.map((t, i) => (
+              <SelectItem key={i} value={t.duration.toString()}>{t.text}</SelectItem>
             ))}
           </SelectContent>
         </Select>
