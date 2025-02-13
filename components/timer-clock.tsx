@@ -9,15 +9,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import useSound from "use-sound";
+import { PlayIcon } from "@radix-ui/react-icons";
 
 export const TimerClock = () => {
   const [duration, setDuration] = useState<number | string>("");
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [isEnd, setEnd] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [duar] = useSound("/sound/shocked-sound-effect.mp3", { volume: 0.5 });
-  const [alarmsRetro] = useSound("/sound/alarms-morning.wav", { volume: 0.5 });
+  const [alarmsRetro, { stop }] = useSound("/sound/alarms-morning.wav");
   // const [goku] = useSound("/sound/metal-pipe.mp3", { volume: 0.3 });
 
   let selectSeconds = [];
@@ -67,6 +69,10 @@ export const TimerClock = () => {
 
     setIsActive(false);
     setIsPaused(false);
+    setEnd(false);
+
+    stop();
+
     setTimeLeft(typeof duration === "number" ? duration : 0);
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -83,12 +89,14 @@ export const TimerClock = () => {
   };
 
   useEffect(() => {
-    console.log({ isActive, isPaused });
+    // if timer is running
     if (isActive && !isPaused) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
+            console.log(timerRef);
             clearInterval(timerRef.current!);
+            setEnd(true);
             alarmsRetro();
             return 0;
           }
@@ -96,6 +104,7 @@ export const TimerClock = () => {
         });
       }, 1000);
     }
+
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -119,7 +128,9 @@ export const TimerClock = () => {
           </SelectTrigger>
           <SelectContent>
             {selectSeconds.map((t, i) => (
-              <SelectItem key={i} value={t.duration.toString()}>{t.text}</SelectItem>
+              <SelectItem key={i} value={t.duration.toString()}>
+                {t.text}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -131,7 +142,17 @@ export const TimerClock = () => {
           Set
         </Button>
       </div>
-      <div className="flex justify-center gap-4">
+      <div className={cn(isEnd ? "flex" : "hidden", "justify-center")}>
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          className="text-gray-800 dark:text-gray-200 px-10"
+        >
+          Stop
+        </Button>
+      </div>
+
+      <div className={cn(isEnd ? "hidden" : "flex", "justify-center gap-2")}>
         <Button
           onClick={handleStart}
           variant="outline"

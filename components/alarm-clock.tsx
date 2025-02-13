@@ -74,6 +74,9 @@ export const AlarmClock = () => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!values.hour || !values.minute)
+      return alert("PLEASE SET TIME CORRECTLY");
+
     const data = { time: `${values.hour}:${values.minute}`, run: false };
 
     const existingTime = alarms.find(
