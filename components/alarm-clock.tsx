@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,6 +23,9 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Cross1Icon } from "@radix-ui/react-icons";
+import useSound from "use-sound";
+
+const timerRef = useRef<NodeJS.Timeout | null>(null);
 
 const formSchema = z.object({
   hour: z.string(),
@@ -36,6 +39,8 @@ export type AlarmsType = {
 
 export const AlarmClock = () => {
   const [alarms, setAlarms] = useState<AlarmsType[]>([]);
+  const [duar] = useSound("/sound/shocked-sound-effect.mp3", { volume: 0.5 });
+  const [alarmsRetro, { stop }] = useSound("/sound/alarms-morning.wav");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -73,6 +78,17 @@ export const AlarmClock = () => {
     },
   });
 
+  // Function to sort an array of objects
+  const compare = (a: AlarmsType, b: AlarmsType) => {
+    if (a.time < b.time) {
+      return -1;
+    }
+    if (a.time > b.time) {
+      return 1;
+    }
+    return 0;
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!values.hour || !values.minute)
       return alert("PLEASE SET TIME CORRECTLY");
@@ -90,9 +106,11 @@ export const AlarmClock = () => {
     if (typeof window !== "undefined") {
       const updateData = [...alarms, data];
 
+      updateData.sort(compare);
       localStorage.setItem("alarms", JSON.stringify(updateData));
 
       setAlarms(updateData);
+      duar();
     }
   }
 
@@ -103,6 +121,7 @@ export const AlarmClock = () => {
 
       localStorage.setItem("alarms", JSON.stringify(newAlarms));
       setAlarms(newAlarms);
+      duar();
     }
   };
 
@@ -113,8 +132,57 @@ export const AlarmClock = () => {
 
       localStorage.setItem("alarms", JSON.stringify(newAlarms));
       setAlarms(newAlarms);
+      duar();
     }
   };
+
+  const adsad = () => {
+    alarms.map((arm) => {
+      const [hours, minutes] = arm.time
+        .split(":")
+        .map((num) => parseInt(num, 10));
+
+      const now = new Date();
+      const alarmsDate = new Date();
+      alarmsDate.setHours(hours, minutes, 0, 0);
+
+      const timeDiff = alarmsDate.getTime() - now.getTime();
+
+      if (timeDiff <= 0) return;
+
+      timerRef.current = setInterval(() => {
+        const currTime = new Date();
+        if (currTime >= alarmsDate) {
+          alarmsRetro();
+        }
+      });
+    });
+  };
+
+  // useEffect(() => {
+  // if timer is running
+  // if (isActive && !isPaused) {
+  // }
+
+  // timerRef.current = setInterval(() => {
+  //   setTimeLeft((prevTime) => {
+  //     if (prevTime <= 1) {
+  //       console.log(timerRef);
+  //       clearInterval(timerRef.current!);
+  //       setEnd(true);
+  //       alarmsRetro();
+  //       return 0;
+  //     }
+  //     return prevTime - 1;
+  //   });
+  // }, 1000);
+
+  // return () => {
+  //   if (timerRef.current) {
+  //     clearInterval(timerRef.current);
+  //   }
+  // };
+  // }, []);
 
   return (
     <div className="flex flex-col gap-2 items-center justify-center rounded-2xl p-8  border">
