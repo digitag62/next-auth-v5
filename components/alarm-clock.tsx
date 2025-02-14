@@ -55,34 +55,6 @@ export const AlarmClock = () => {
     }
   }, []);
 
-  useEffect(() => {
-    // Function to check if alarm time has been reached
-    const checkAlarms = () => {
-      const now = new Date();
-      alarms.forEach((alarm, idx) => {
-        const [hours, minutes] = alarm.time.split(":").map(Number);
-        const alarmTime = new Date(now);
-        alarmTime.setHours(hours, minutes, 0, 0);
-
-        // Calculate the difference between now and the alarm time
-        const timeDifference = alarmTime.getTime() - now.getTime();
-
-        if (timeDifference <= 0) {
-          return;
-        } else {
-          setAlarmActive(alarmTime);
-        }
-      });
-    };
-
-    // Run the alarm checking function every minute
-    // timerRef.current = setInterval(checkAlarms, 1000); // check every minute
-    checkAlarms(); // Run immediately when component is mounted
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(timerRef.current!);
-  }, [alarms]);
-
   let selectMinutes = [];
   let selectHours = [];
 
@@ -148,6 +120,8 @@ export const AlarmClock = () => {
 
   const handleCheck = (e: boolean, idx: number) => {
     if (typeof window !== "undefined") {
+      if (e === false) stop();
+
       const newAlarms = [...alarms];
       newAlarms.map((na) => (na.run = false));
       newAlarms[idx].run = e;
@@ -169,47 +143,34 @@ export const AlarmClock = () => {
     }
   };
 
-  // useEffect(() => {
-  //   // Function to check if alarm time has been reached
-  //   const checkAlarms = () => {
-  //     const now = new Date();
-  //     alarms.forEach((alarm) => {
-  //       if (alarm.run) {
-  //         const [hours, minutes] = alarm.time.split(":").map(Number);
-  //         const alarmTime = new Date(now);
-  //         alarmTime.setHours(hours, minutes, 0, 0); // Set the time of the alarm
+  const checkAlarms = () => {
+    const currentTime = new Date();
+    const formattedTime = `${currentTime
+      .getHours()
+      .toString()
+      .padStart(2, "0")}:${currentTime
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}:${currentTime
+      .getSeconds()
+      .toString()
+      .padStart(2, "0")}`;
 
-  //         // Calculate the difference between now and the alarm time
-  //         const timeDifference = alarmTime.getTime() - now.getTime();
+    return alarms.map((alarm, idx) => {
+      if (alarm.time + ":00" === formattedTime && !alarm.run) {
+        alarmsRetro();
+        handleCheck(true, idx);
+        console.log(`Alarm triggered at ${alarm.time}!`);
+        return { ...alarm, run: true };
+      }
+      return alarm;
+    });
+  };
 
-  //         if (timeDifference <= 0) {
-  //           setStatus(`The alarm for ${alarm.time} has already passed.`);
-  //         } else {
-  // Check the alarm every second
-  // timerRef.current = setInterval(() => {
-  //   const currentTime = new Date();
-  //   if (currentTime >= alarmTime) {
-  //     clearInterval(timerRef.current!);
-  //     alarmsRetro();
-  // cleari();
-  //     alert(`Alarm triggered for ${alarm.time}!`);
-  //     setStatus(`Alarm triggered for ${alarm.time}!`);
-  //   }
-  // }, 1000);
-
-  // const cleari = () => clearInterval(timerRef.current);
-  //       }
-  //     }
-  //   });
-  // };
-
-  // Run the alarm checking function every minute
-  // timerRef.current = setInterval(checkAlarms, 60000); // check every minute
-  // checkAlarms(); // Run immediately when component is mounted
-
-  // Cleanup interval on component unmount
-  //   return () => clearInterval(timerRef.current!);
-  // }, [alarms]);
+  useEffect(() => {
+    const interval = setInterval(checkAlarms, 1000); // check every minute
+    return () => clearInterval(interval); // cleanup on component unmount
+  }, [alarms]);
 
   return (
     <div className="flex flex-col gap-2 items-center justify-center rounded-2xl p-8  border">
@@ -277,10 +238,12 @@ export const AlarmClock = () => {
               <Cross1Icon className="w-4 h-4" />
             </Button>
             <Label htmlFor="airplane-mode">{alm.time}</Label>
+
             <Switch
               id="airplane-mode"
               onCheckedChange={(e) => handleCheck(e, index)}
               checked={alm.run}
+              disabled={!alm.run}
             />
           </div>
         ))}
