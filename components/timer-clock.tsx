@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import useSound from "use-sound";
-import { PlayIcon } from "@radix-ui/react-icons";
 
 export const TimerClock = () => {
   const [duration, setDuration] = useState<number | string>("");
@@ -21,6 +20,11 @@ export const TimerClock = () => {
   const [duar] = useSound("/sound/shocked-sound-effect.mp3", { volume: 0.5 });
   const [alarmsRetro, { stop }] = useSound("/sound/alarms-morning.wav");
   // const [goku] = useSound("/sound/metal-pipe.mp3", { volume: 0.3 });
+
+  useEffect(() => {
+    // Request notification permission when the component mounts
+    requestNotificationPermission();
+  }, []);
 
   let selectSeconds = [];
   for (let i: number = 1; i <= 60; i++) {
@@ -82,11 +86,39 @@ export const TimerClock = () => {
   const formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
+
+    // document.title = `${String(minutes).padStart(2, "0")}:${String(
+    //   seconds
+    // ).padStart(2, "0")} - Timer`;
     return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
       2,
       "0"
     )}`;
   };
+
+  // Request permission to send notifications
+  const requestNotificationPermission = () => {
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  };
+
+  // Show notification
+  const showNotification = () => {
+    if (Notification.permission === "granted") {
+      new Notification("Time's Up!", {
+        body: "Your countdown timer has finished.",
+        // icon: "/path-to-your-icon.png", // Optional icon for notification
+      });
+    }
+  };
+
+  // Update the document title whenever timeLeft changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      document.title = `${formatTime(timeLeft)} - Timer`;
+    }
+  }, [timeLeft]); // Re-run this effect when `timeLeft` changes
 
   useEffect(() => {
     // if timer is running
@@ -96,6 +128,7 @@ export const TimerClock = () => {
           if (prevTime <= 1) {
             console.log(timerRef);
             clearInterval(timerRef.current!);
+            showNotification();
             setEnd(true);
             alarmsRetro();
             return 0;
@@ -116,7 +149,7 @@ export const TimerClock = () => {
     <div className="flex flex-col gap-2 items-center justify-center rounded-2xl p-8  border">
       <div className="text-2xl font-bold tracking-tight">Countdown Timer</div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">
-        Display countdown timeer in minutes, and seconds.
+        Display countdown timer in minutes, and seconds.
       </p>
       <div className="text-6xl font-bold tracking-tight">
         {formatTime(timeLeft)}
@@ -124,7 +157,7 @@ export const TimerClock = () => {
       <div className="flex items-center mt-4 gap-2">
         <Select onValueChange={handleDurationChange}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Theme" />
+            <SelectValue placeholder="Select Time" />
           </SelectTrigger>
           <SelectContent>
             {selectSeconds.map((t, i) => (
@@ -145,7 +178,7 @@ export const TimerClock = () => {
       <div className={cn(isEnd ? "flex" : "hidden", "justify-center")}>
         <Button
           onClick={handleReset}
-          variant="outline"
+          variant="destructive"
           className="text-gray-800 dark:text-gray-200 px-10"
         >
           Stop

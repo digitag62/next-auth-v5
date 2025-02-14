@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -37,10 +37,6 @@ export type AlarmsType = {
 
 export const AlarmClock = () => {
   const [alarms, setAlarms] = useState<AlarmsType[]>([]);
-  const [alarmActive, setAlarmActive] = useState<Date | null>(null);
-  const [status, setStatus] = useState<string>("");
-
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [duar] = useSound("/sound/shocked-sound-effect.mp3", { volume: 0.5 });
   const [alarmsRetro, { stop }] = useSound("/sound/alarms-morning.wav", {
     volume: 0.5,
@@ -160,6 +156,7 @@ export const AlarmClock = () => {
       if (alarm.time + ":00" === formattedTime && !alarm.run) {
         alarmsRetro();
         handleCheck(true, idx);
+        showNotification(alarm.time); // Show notification when the alarm time matches
         console.log(`Alarm triggered at ${alarm.time}!`);
         return { ...alarm, run: true };
       }
@@ -167,13 +164,36 @@ export const AlarmClock = () => {
     });
   };
 
+  // Request permission to send notifications
+  const requestNotificationPermission = () => {
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  };
+
+  // Show notification
+  const showNotification = (alarmTime: string) => {
+    if (Notification.permission === "granted") {
+      new Notification(`Alarm: ${alarmTime}`, {
+        body: "Your alarm time has arrived!",
+        icon: "/path-to-your-icon.png", // Optional icon for notification
+      });
+    }
+  };
+
   useEffect(() => {
-    const interval = setInterval(checkAlarms, 1000); // check every minute
-    return () => clearInterval(interval); // cleanup on component unmount
+    // Ensure the code only runs on the client side
+    if (typeof window !== "undefined") {
+      // Request notification permission
+      requestNotificationPermission();
+
+      const interval = setInterval(checkAlarms, 1000); // check every minute
+      return () => clearInterval(interval); // cleanup on component unmount
+    }
   }, [alarms]);
 
   return (
-    <div className="flex flex-col gap-2 items-center justify-center rounded-2xl p-8  border">
+    <div className="flex flex-col gap-2 items-center justify-center rounded-2xl p-8 border">
       <div className="text-2xl font-bold tracking-tight">Alarm Timer</div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">
         Display countdown timeer in minutes, and seconds.
