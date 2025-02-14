@@ -25,8 +25,6 @@ import { Switch } from "./ui/switch";
 import { Cross1Icon } from "@radix-ui/react-icons";
 import useSound from "use-sound";
 
-const timerRef = useRef<NodeJS.Timeout | null>(null);
-
 const formSchema = z.object({
   hour: z.string(),
   minute: z.string(),
@@ -39,8 +37,14 @@ export type AlarmsType = {
 
 export const AlarmClock = () => {
   const [alarms, setAlarms] = useState<AlarmsType[]>([]);
+  const [alarmActive, setAlarmActive] = useState<Date | null>(null);
+  const [status, setStatus] = useState<string>("");
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [duar] = useSound("/sound/shocked-sound-effect.mp3", { volume: 0.5 });
-  const [alarmsRetro, { stop }] = useSound("/sound/alarms-morning.wav");
+  const [alarmsRetro, { stop }] = useSound("/sound/alarms-morning.wav", {
+    volume: 0.5,
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -50,6 +54,34 @@ export const AlarmClock = () => {
       setAlarms(savedData);
     }
   }, []);
+
+  useEffect(() => {
+    // Function to check if alarm time has been reached
+    const checkAlarms = () => {
+      const now = new Date();
+      alarms.forEach((alarm, idx) => {
+        const [hours, minutes] = alarm.time.split(":").map(Number);
+        const alarmTime = new Date(now);
+        alarmTime.setHours(hours, minutes, 0, 0);
+
+        // Calculate the difference between now and the alarm time
+        const timeDifference = alarmTime.getTime() - now.getTime();
+
+        if (timeDifference <= 0) {
+          return;
+        } else {
+          setAlarmActive(alarmTime);
+        }
+      });
+    };
+
+    // Run the alarm checking function every minute
+    // timerRef.current = setInterval(checkAlarms, 1000); // check every minute
+    checkAlarms(); // Run immediately when component is mounted
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(timerRef.current!);
+  }, [alarms]);
 
   let selectMinutes = [];
   let selectHours = [];
@@ -117,6 +149,7 @@ export const AlarmClock = () => {
   const handleCheck = (e: boolean, idx: number) => {
     if (typeof window !== "undefined") {
       const newAlarms = [...alarms];
+      newAlarms.map((na) => (na.run = false));
       newAlarms[idx].run = e;
 
       localStorage.setItem("alarms", JSON.stringify(newAlarms));
@@ -136,53 +169,47 @@ export const AlarmClock = () => {
     }
   };
 
-  const adsad = () => {
-    alarms.map((arm) => {
-      const [hours, minutes] = arm.time
-        .split(":")
-        .map((num) => parseInt(num, 10));
-
-      const now = new Date();
-      const alarmsDate = new Date();
-      alarmsDate.setHours(hours, minutes, 0, 0);
-
-      const timeDiff = alarmsDate.getTime() - now.getTime();
-
-      if (timeDiff <= 0) return;
-
-      timerRef.current = setInterval(() => {
-        const currTime = new Date();
-        if (currTime >= alarmsDate) {
-          alarmsRetro();
-        }
-      });
-    });
-  };
-
   // useEffect(() => {
-  // if timer is running
-  // if (isActive && !isPaused) {
-  // }
+  //   // Function to check if alarm time has been reached
+  //   const checkAlarms = () => {
+  //     const now = new Date();
+  //     alarms.forEach((alarm) => {
+  //       if (alarm.run) {
+  //         const [hours, minutes] = alarm.time.split(":").map(Number);
+  //         const alarmTime = new Date(now);
+  //         alarmTime.setHours(hours, minutes, 0, 0); // Set the time of the alarm
 
+  //         // Calculate the difference between now and the alarm time
+  //         const timeDifference = alarmTime.getTime() - now.getTime();
+
+  //         if (timeDifference <= 0) {
+  //           setStatus(`The alarm for ${alarm.time} has already passed.`);
+  //         } else {
+  // Check the alarm every second
   // timerRef.current = setInterval(() => {
-  //   setTimeLeft((prevTime) => {
-  //     if (prevTime <= 1) {
-  //       console.log(timerRef);
-  //       clearInterval(timerRef.current!);
-  //       setEnd(true);
-  //       alarmsRetro();
-  //       return 0;
-  //     }
-  //     return prevTime - 1;
-  //   });
+  //   const currentTime = new Date();
+  //   if (currentTime >= alarmTime) {
+  //     clearInterval(timerRef.current!);
+  //     alarmsRetro();
+  // cleari();
+  //     alert(`Alarm triggered for ${alarm.time}!`);
+  //     setStatus(`Alarm triggered for ${alarm.time}!`);
+  //   }
   // }, 1000);
 
-  // return () => {
-  //   if (timerRef.current) {
-  //     clearInterval(timerRef.current);
-  //   }
+  // const cleari = () => clearInterval(timerRef.current);
+  //       }
+  //     }
+  //   });
   // };
-  // }, []);
+
+  // Run the alarm checking function every minute
+  // timerRef.current = setInterval(checkAlarms, 60000); // check every minute
+  // checkAlarms(); // Run immediately when component is mounted
+
+  // Cleanup interval on component unmount
+  //   return () => clearInterval(timerRef.current!);
+  // }, [alarms]);
 
   return (
     <div className="flex flex-col gap-2 items-center justify-center rounded-2xl p-8  border">
